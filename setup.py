@@ -20,6 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'toy_node = tb4_toy.toy_node:main'
         ],
     },
 )
