@@ -3,7 +3,7 @@ from rclpy.node import Node
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 from std_srvs.srv import Trigger
-import time
+
 
 class ToyNode(Node):
 
@@ -64,9 +64,10 @@ class ToyNode(Node):
             # get the distance traveled and nearness to the goal
             self.update_distance_and_nearness()
             # print the current status
-            self.get_logger().info("Traveled {0}m, {1}m to our goal.".format(self.distance, self.nearness))
+            self.get_logger().info("Traveled {:.2f}m, {:.2f}m to our goal.".format(self.distance,
+                                                                             self.nearness))
             # if we meet our criteria stop
-            if self.distance > 0.5 and self.nearness < 0.05:
+            if self.distance > 0.1 and self.nearness < 0.05:
                 self.do_loop = False
                 self.get_logger().info("Stopping Looping")
             else: # otherwise send the command
@@ -84,7 +85,7 @@ class ToyNode(Node):
         Service call entry point for looping
         """
         self.get_logger().info('Incoming loop request!')
-        self.get_logger().info("Our loops starts at ({0},{1})".format(self.position_x,
+        self.get_logger().info("Our loops starts at ({:.2f},{:.2f})".format(self.position_x,
                                                                       self.position_y))
         # Set our initial position
         self.start_x = self.position_x
