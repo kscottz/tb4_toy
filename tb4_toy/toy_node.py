@@ -3,7 +3,7 @@ from rclpy.node import Node
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 from std_srvs.srv import Trigger
-
+from irobot_create_msgs.msg import HazardDetectionVector
 
 class ToyNode(Node):
 
@@ -15,6 +15,14 @@ class ToyNode(Node):
             self.odom_callback,
             10)
         self.subscription  # prevent unused variable warning
+
+        self.bump_subscription = self.create_subscription(
+            HazardDetectionVector,
+            '/hazard_detection',
+            self.hazard_callback,
+            10)
+        self.bump_subscription  # prevent unused variable warning
+
         # Current position
         self.position_x = 0.00
         self.position_y = 0.00
@@ -42,7 +50,32 @@ class ToyNode(Node):
         """
         self.position_x = msg.pose.pose.position.x
         self.position_y = msg.pose.pose.position.y
-        
+
+    def hazard_callback(self, msg):
+        """
+        Check for built in hazard sensors
+        """
+        # If we get a hazard detection
+        if len(msg.detections) > 0:
+            # Parse the message
+            detect_type = msg.detections[0].type
+            detect_frame = msg.header.frame_id
+            if detect_type > 0: # We're bumping or about to bump
+                # scream bloody murder
+                self.get_logger().info('Got signal {0} on frame {1}.'.format(detect_type, detect_frame))
+                self.get_logger().info('ABORT LOOPING')
+                # Stop the loop and set velocity to zero
+                self.do_loop = False
+                msg = Twist()
+                msg.linear.x = 0.00
+                msg.linear.y = 0.00
+                msg.linear.z = 0.00
+                msg.angular.x = 0.00
+                msg.angular.y = 0.00
+                msg.angular.z = 0.00
+                # Send message
+                self.publisher.publish(msg)            
+             
     def update_distance_and_nearness(self):
         """
         A function that keeps track of distance traveled and proximity to the goal 
