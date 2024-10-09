@@ -4,6 +4,7 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 from std_srvs.srv import Trigger
 from irobot_create_msgs.msg import HazardDetectionVector
+from rcl_interfaces.msg import ParameterDescriptor
 
 class ToyNode(Node):
 
@@ -36,14 +37,23 @@ class ToyNode(Node):
         self.distance = 0.00
         self.nearness = 0.00
         self.do_loop = False
+
+        # Create our cached parameter value
+        self.z_angular_velocity = -3.0
+        # tell ROS hey, we have a parameter
+        self.declare_parameter('z_angular_velocity', rclpy.Parameter.Type.DOUBLE)
+        
         # the publisher that will send our velocity command
         self.publisher = self.create_publisher(Twist, '/cmd_vel',10)
         self.srv = self.create_service(Trigger, 'do_loopy', self.do_loopy_callback)
         # how fast our loop will run
         timer_period = 0.1 # 10 Hz
         # Create the timer for our loop callback
+        
         self.timer = self.create_timer(timer_period, self.loop_callback)
-
+       
+        
+        
     def odom_callback(self, msg):
         """
         Update the current robot position from odomettry
@@ -92,7 +102,7 @@ class ToyNode(Node):
         """
         Main looping callback. If triggered update values and send velocity command
         """
-        # if we are active 
+        # if we are active
         if self.do_loop:
             # get the distance traveled and nearness to the goal
             self.update_distance_and_nearness()
@@ -110,9 +120,25 @@ class ToyNode(Node):
                 msg.linear.z = 0.00
                 msg.angular.x = 0.00
                 msg.angular.y = 0.00
-                msg.angular.z = -3.0
-                self.publisher.publish(msg)            
-        
+                msg.angular.z = self.z_angular_velocity
+                self.publisher.publish(msg)
+        else: # updating params in the middle of an activity can have undefined behavior
+            self._update_params() # only update if we're not in the middle of doing some work
+
+    def _update_params(self):
+        """
+        Update all of the parameters used by this node
+        """
+        # get the parameter from the parameter server
+        new_value = self.get_parameter('z_angular_velocity').get_parameter_value().double_value
+        # if it has changed
+        if new_value != self.z_angular_velocity:
+            # tell people about it
+            self.get_logger().info('Toy Node: updated Z angular velocity from {0} to {1}'.format(self.z_angular_velocity,new_value))
+            # do the update
+            self.z_angular_velocity  = new_value
+
+            
     def do_loopy_callback(self, request, response):
         """
         Service call entry point for looping
@@ -138,6 +164,14 @@ def main(args=None):
     rclpy.init(args=args)
 
     toy_node = ToyNode()
+    # Set Parameter to a sane default at run time.
+    # You can do this in many places, including inside the node
+    # Here we're setting a sane default
+    ang_param = rclpy.parameter.Parameter('z_angular_velocity', # Name
+                                          rclpy.Parameter.Type.DOUBLE, # Type 
+                                          -3.0 ) # value
+    # The param API allows for bulk param setting
+    toy_node.set_parameters([ang_param])
 
     rclpy.spin(toy_node)
 
