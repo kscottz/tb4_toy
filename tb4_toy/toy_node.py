@@ -41,7 +41,7 @@ class ToyNode(Node):
         # Create our cached parameter value
         self.z_angular_velocity = -3.0
         # tell ROS hey, we have a parameter
-        self.declare_parameter('z_angular_velocity', rclpy.Parameter.Type.DOUBLE)#,  descript)
+        self.declare_parameter('z_angular_velocity', rclpy.Parameter.Type.DOUBLE)
         
         # the publisher that will send our velocity command
         self.publisher = self.create_publisher(Twist, '/cmd_vel',10)
@@ -52,18 +52,6 @@ class ToyNode(Node):
         
         self.timer = self.create_timer(timer_period, self.loop_callback)
        
-    def _update_params(self):
-        """
-        Update all of the parameters used by this node
-        """
-        # get the parameter from the parameter server
-        new_value = self.get_parameter('z_angular_velocity').get_parameter_value().double_value
-        # if it has changed
-        if new_value != self.z_angular_velocity:
-            # tell people about it
-            self.get_logger().info('Toy Node: updated Z angular velocity from {0} to {1}'.format(self.z_angular_velocity,new_value))
-            # do the update
-            self.z_angular_velocity  = new_value
         
         
     def odom_callback(self, msg):
@@ -135,9 +123,22 @@ class ToyNode(Node):
                 msg.angular.z = self.z_angular_velocity
                 self.publisher.publish(msg)
         else: # updating params in the middle of an activity can have undefined behavior
-
             self._update_params() # only update if we're not in the middle of doing some work
-        
+
+    def _update_params(self):
+        """
+        Update all of the parameters used by this node
+        """
+        # get the parameter from the parameter server
+        new_value = self.get_parameter('z_angular_velocity').get_parameter_value().double_value
+        # if it has changed
+        if new_value != self.z_angular_velocity:
+            # tell people about it
+            self.get_logger().info('Toy Node: updated Z angular velocity from {0} to {1}'.format(self.z_angular_velocity,new_value))
+            # do the update
+            self.z_angular_velocity  = new_value
+
+            
     def do_loopy_callback(self, request, response):
         """
         Service call entry point for looping
