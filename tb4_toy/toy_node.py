@@ -44,7 +44,7 @@ class ToyNode(Node):
         self.declare_parameter('z_angular_velocity', rclpy.Parameter.Type.DOUBLE)
         
         # the publisher that will send our velocity command
-        self.publisher = self.create_publisher(Twist, '/cmd_vel',10)
+        self.publisher = self.create_publisher(Twist, '/cmd_vel_unstamped',10)
         self.srv = self.create_service(Trigger, 'do_loopy', self.do_loopy_callback)
         # how fast our loop will run
         timer_period = 0.1 # 10 Hz
