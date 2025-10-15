@@ -3,16 +3,16 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.actions import IncludeLaunchDescription
-from launch_ros.actions import Node
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch_ros.actions import Node
 
 ARGUMENTS = [
     DeclareLaunchArgument('namespace', default_value='',
                           description='Robot namespace'),
     DeclareLaunchArgument('rviz', default_value='false',
                           choices=['true', 'false'], description='Start rviz.'),
-    DeclareLaunchArgument('world', default_value='warehouse',
+    DeclareLaunchArgument('world', default_value='maze',
                           description='Simulation World'),
     DeclareLaunchArgument('model', default_value='standard',
                           choices=['standard', 'lite'],
@@ -23,20 +23,20 @@ for pose_element in ['x', 'y', 'z', 'yaw']:
     ARGUMENTS.append(DeclareLaunchArgument(pose_element, default_value='0.0',
                      description=f'{pose_element} component of the robot pose.'))
 
+
 def generate_launch_description():
     # Directories
-    pkg_turtlebot4_ignition_bringup = get_package_share_directory(
-        'turtlebot4_ignition_bringup')
+    pkg_turtlebot4_gz_bringup = get_package_share_directory(
+        'turtlebot4_gz_bringup')
 
     # Paths
-    ignition_launch = PathJoinSubstitution(
-        [pkg_turtlebot4_ignition_bringup, 'launch', 'ignition.launch.py'])
+    gazebo_launch = PathJoinSubstitution(
+        [pkg_turtlebot4_gz_bringup, 'launch', 'sim.launch.py'])
     robot_spawn_launch = PathJoinSubstitution(
-        [pkg_turtlebot4_ignition_bringup, 'launch', 'turtlebot4_spawn.launch.py'])
+        [pkg_turtlebot4_gz_bringup, 'launch', 'turtlebot4_spawn.launch.py'])
 
-    
     gazebo = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([ignition_launch]),
+        PythonLaunchDescriptionSource([gazebo_launch]),
         launch_arguments=[
             ('world', LaunchConfiguration('world'))
         ]
